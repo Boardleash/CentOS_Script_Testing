@@ -1,0 +1,145 @@
+#!/bin/bash
+#
+#############
+### REAPO ###
+#############
+#
+# TITLE: reapo_cv1
+# AUTHOR: Boardleash (Derek)
+# DATE: Saturday, December 21 2024
+#
+# An interactive script for creating a repository.
+# This will build a basic repository.
+# This script requires elevated privileges (sudo/root).
+# Tested on CentOS Stream 9 VM (Desktop and Server).
+
+################################
+### FORMATTING AND VARIABLES ###
+################################
+
+# No special formatting or variables for this script
+
+####################
+### INTRODUCTION ###
+####################
+
+# Set up an introduction function to let the user know what is about to happen
+
+intro() {
+	echo; echo "Hello!  I will help you build a repository.  You just need to answer a couple of questions."
+}
+
+#################
+### QUESTIONS ###
+#################
+
+# Set up function for relevant questions.  Store answers in appropriate variables
+
+repoid_ask() {
+	echo; read -p "What unique ID or name would you like to give your repository?: " repo_id
+}
+
+name_ask() {
+	echo; read -p "What name would you like to give your repository? (this will be the actual name of the ".repo" file as well): " name
+}
+
+baseurl_ask() {
+	echo; read -p "Do you have the URL or location of the repository? (y/n/unsure): " baseurl
+	if [ "$baseurl" == 'y' ] || [ "$baseurl" == 'Y' ] || [ "$baseurl" == 'yes' ] || [ "$baseurl" == 'Yes' ]; then
+		read -p "Please enter the URL/path for the repository: " urlpath
+		baseurl="$urlpath"
+	elif [ "$baseurl" == 'n' ] || [ "$baseurl" == 'N' ] || [ "$baseurl" == 'no' ] || [ "$baseurl" == 'No' ] || [ "$baseurl" == 'unsure' ]; then
+		baseurl=""
+	else
+		echo "That is not an appropriate response.  Please try again."
+		baseurl_ask
+	fi
+}
+
+gpgkey_ask() {
+	echo; read -p "Do you have a GPG key (or multiple GPG keys) for the repository? (y/n/unsure): " gpgkey
+	if [ "$gpgkey" == 'y' ] || [ "$gpgkey" == 'Y' ] || [ "$gpgkey" == 'yes' ] || [ "$gpgkey" == 'Yes' ]; then
+		read -p "Please enter the path for the GPG key: " keypath
+		gpgkey="$keypath"
+	elif [ "$gpgkey" == 'n' ] || [ "$gpgkey" == 'N' ] || [ "$gpgkey" == 'no' ] || [ "$gpgkey" == 'No' ] || [ "$gpgkey" == 'unsure' ]; then
+		gpgkey=""
+	else
+		echo "That is not an appropriate response.  Please try again."
+		gpgkey_ask
+	fi
+}
+
+gpgcheck_ask() {
+	echo; read -p "Do you want to check for GPG key signatures on the repository being created? (y/n/unsure): " gpgcheck
+	if [ "$gpgcheck" == 'y' ] || [ "$gpgcheck" == 'Y' ] || [ "$gpgcheck" == 'yes' ] || [ "$gpgcheck" == 'Yes' ]; then
+		gpgcheck='1'
+	elif [ "$gpgcheck" == 'n' ] || [ "$gpgcheck" == 'N' ] || ["$gpgcheck" == 'no' ] || [ "$gpgcheck" == 'No' ] || [ "$gpgcheck" == 'unsure' ]; then
+		gpgcheck='0'
+	else
+		echo "That is not an appropriate response.  Please try again."
+		gpgcheck_ask
+	fi
+}
+
+enable_ask() {
+	echo; read -p "Do you want the repository to be enabled? (y/n/unsure): " uwantenable
+	if [ "$uwantenable" == 'y' ] || [ "$uwantenable" == 'Y' ] || [ "$uwantenable" == 'yes' ] || [ "$uwantenable" == 'Yes' ]; then
+		uwantenable='1'
+	elif [ "$uwantenable" == 'n' ] || [ "$uwantenable" == 'N' ] || [ "$uwantenable" == 'no' ] || [ "$uwantenable" == 'No' ] || [ "$uwantenable" == 'unsure' ]; then
+		uwantenable='0'
+	else
+		echo "That is not an appropriate response.  Please try again."
+		enable_ask
+	fi
+}
+
+#############################
+### CREATE THE REPOSITORY ###
+#############################
+
+# Create the repository on the local machine based on the user's provided answers
+
+create_repository() {
+	ls /etc/ | grep -q yum.repos.d
+	is_debian=$(echo $?)
+	if [ "$is_debian" == 0 ]; then
+		touch /etc/yum.repos.d/"$name".repo
+		new_repo="/etc/yum.repos.d/"$name".repo"
+		{
+			echo "["$repo_id"]"
+			echo "Name="$name""
+			echo "BaseURL="$baseurl""
+			echo "GPGKey="$gpgkey""
+			echo "GPGCheck="$gpgcheck""
+			echo "Enabled="$uwantenable""
+		} >> "$new_repo"
+	else
+		echo "This is a Debian machine.  Unfortunately, this script will not be able to create the correctly configured repository on this device."
+		exit
+	fi
+}
+
+#############################
+### CONSOLIDATE FUNCTIONS ###
+#############################
+
+# Consolidate all functions into one main function
+
+main() {
+	intro
+	repoid_ask
+	name_ask
+	baseurl_ask
+	gpgkey_ask
+	gpgcheck_ask
+	enable_ask
+	create_repository
+}
+
+#############################
+### EXECUTE MAIN FUNCTION ###
+#############################
+
+main
+
+# EOF
